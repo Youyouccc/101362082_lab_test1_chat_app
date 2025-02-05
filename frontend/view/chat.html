@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Chat Room</h2>
+        <div>
+            <label for="room">Select Room:</label>
+            <select id="room" class="form-select">
+                <option value="devops">DevOps</option>
+                <option value="cloud computing">Cloud Computing</option>
+                <option value="covid19">COVID-19</option>
+                <option value="sports">Sports</option>
+                <option value="nodejs">NodeJS</option>
+            </select>
+            <button class="btn btn-primary mt-2" onclick="joinRoom()">Join Room</button>
+        </div>
+        <div id="chatArea" class="mt-4" style="display: none;">
+            <div id="messages" class="border p-3" style="height: 300px; overflow-y: scroll;"></div>
+            <input type="text" id="message" class="form-control mt-2" placeholder="Type a message...">
+            <button class="btn btn-success mt-2" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io("http://localhost:3000");
+        let currentRoom = "";
+        let username = localStorage.getItem("username");
+        if (!username) {
+            alert("You need to login first.");
+            window.location.href = "login.html";
+        }
+
+        function joinRoom() {
+            currentRoom = document.getElementById("room").value;
+            socket.emit("joinRoom", currentRoom);
+            document.getElementById("chatArea").style.display = "block";
+        }
+
+        function sendMessage() {
+            const message = document.getElementById("message").value;
+            if (message.trim() !== "") {
+                socket.emit("chatMessage", { room: currentRoom, message, user: username });
+                document.getElementById("message").value = "";
+            }
+        }
+
+        socket.on("message", ({ user, message }) => {
+            const messageDiv = document.createElement("div");
+            messageDiv.innerHTML = `<strong>${user}:</strong> ${message}`;
+            document.getElementById("messages").appendChild(messageDiv);
+        });
+    </script>
+</body>
+</html>
